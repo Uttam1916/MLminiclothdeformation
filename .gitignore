@@ -1,0 +1,24 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.ipynb_checkpoints/
+
+# Raw dataset downloads (can be re-downloaded via scripts)
+data/raw/*.zip
+data/extracted/
+
+# Temporary / scratch files
+scratch/
+paper_extracted/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
