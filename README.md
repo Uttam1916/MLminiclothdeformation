@@ -75,7 +75,7 @@ pip install -r requirements.txt
 
 ##  Running the Pipeline
 
-### Step 1: Preprocessing & Dimensionality Reduction
+###  Preprocessing & Dimensionality Reduction
 Preprocesses poses to unit quaternions, splits data into 70 train / 20 val / 20 test, and computes PCA on train offsets:
 
 ```bash
@@ -121,7 +121,7 @@ All models were evaluated on the held-out test split of 20 unseen poses:
 3. **Real-Time Speed:** Inference latency across all models is **< 0.3 ms** (> 3,300 FPS), delivering a **~600,000× speedup** over procedural simulation.
 
 
-## 9. Limitations & Future Work
+##  Limitations & Future Work
 
 - **Static Equilibrium:** The current dataset models equilibrium deformation per pose, omitting dynamic velocity and cloth inertia over continuous movement sequences.
 - **Future Directions:** Integrating temporal sequence models (GRUs, temporal convolutions) to predict frame-to-frame cloth dynamics, and incorporating physics-informed Laplacian surface loss functions to regularize inter-vertex curvature.
