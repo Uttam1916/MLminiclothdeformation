@@ -1,26 +1,21 @@
 # Data-Driven 3D Garment Deformation from Human Pose
-
+# SRNs: PES1UG24CS697, PES1UG24CS698
 **Course:** UE24CS352A - Machine Learning Mini-Project  
 **Topic:** Reproduction and Extension of *Data-Driven Clothing for Interactive Applications* (Xue & Wu, Stanford CS 229)  
 **Alternative Dataset:** TailorNet Dataset (CVPR 2020, Max Planck Institute for Informatics)  
 
 ---
 
-## 1. Project Overview
+##  Project Overview
 
 Simulating cloth physics using classical partial differential equation solvers (e.g., PhysBAM finite element or mass-spring systems) takes multiple minutes per frame (~180 seconds in the reference paper), making interactive 3D applications (VR, gaming, character animation, and virtual try-on) intractable.
 
 This project implements a data-driven neural network pipeline to predict 3D cloth deformation directly from human body skeletal poses in real-time (< 0.3 ms per frame, over 3,300 FPS).
 
-### Key Highlights
-- **Faithful Methodological Reproduction:** Reproduces the core architecture of Xue & Wu (2021) featuring joint rotation quaternions as inputs, PCA dimensionality reduction on vertex displacements, and a fixed Principal Component (PC) reconstruction layer.
-- **Public Dataset Adaptation:** Because the original paper's proprietary PhysBAM coat dataset is not publicly available, we adapt the official public TailorNet dataset (`t-shirt_female` simulation sequence).
-- **Novel Architectural Improvement:** Proposes an **Improved ResMLP** with Residual skip connections, Layer Normalization, GELU activations, Dropout, and physical pose jitter data augmentation, achieving a **35.4% reduction in test MSE** and a **27.0% reduction in 3D geometric error** compared to the paper baseline.
-- **End-to-End Reproducibility:** Includes full pipeline scripts, live 3D inference demo, Wavefront `.obj` mesh exports, a two-page academic report (PDF & Markdown), and a presentation slide deck (PDF & Markdown).
 
 ---
 
-## 2. Relationship to the Reference Paper
+## Relationship to the Reference Paper
 
 | Feature | Original Paper (Xue & Wu, 2021) | Our Implementation | Rationale / Note |
 |---|---|---|---|
@@ -59,7 +54,7 @@ unzip -q data/raw/t-shirt_female_sample.zip -d data/extracted/
 
 ---
 
-## 4. Environment Setup & Dependencies
+##  Environment Setup & Dependencies
 
 Python 3.10+ or 3.11 is recommended.
 
@@ -78,56 +73,7 @@ pip install -r requirements.txt
 
 ---
 
-## 5. Project Structure
-
-```
-.
-├── checkpoints/               # Saved model weights & training history logs
-│   ├── linear_baseline_best.pt
-│   ├── paper_mlp_best.pt
-│   ├── improved_resmlp_best.pt
-│   └── improved_resmlp_plus_aug_best.pt
-├── data/
-│   ├── raw/                   # Downloaded raw zip archives (ignored by git)
-│   ├── extracted/             # Extracted TailorNet files (ignored by git)
-│   └── processed/             # Cached preprocessed dataset (dataset_cache.npz)
-├── figures/                   # Generated high-resolution publication figures
-│   ├── loss_curves.png
-│   ├── mesh_comparison_best.png
-│   ├── mesh_comparison_worst.png
-│   ├── metrics_summary.png
-│   ├── pca_analysis.png
-│   └── vertex_error_heatmap.png
-├── outputs/                   # Benchmark results and demo 3D OBJ exports
-│   ├── demo_sample_0_gt.obj
-│   ├── demo_sample_0_pred.obj
-│   ├── demo_sample_0_render.png
-│   ├── evaluation_results.json
-│   └── evaluation_table.md
-├── presentation/              # Final review slide deck
-│   ├── generate_slides_pdf.py # ReportLab slide compiler
-│   ├── presentation.pdf       # 10-slide landscape presentation PDF
-│   └── slides.md              # Markdown presentation slides
-├── report/                    # Final two-page project write-up
-│   ├── generate_pdf.py        # ReportLab report compiler
-│   ├── report.pdf             # Two-page academic report PDF
-│   └── report.md              # Markdown source report
-├── requirements.txt           # Project dependencies
-├── scripts/
-│   ├── demo.py                # Real-time inference & 3D OBJ export demo
-│   └── run_pipeline.py        # Complete end-to-end training & benchmarking runner
-└── src/
-    ├── dataset/               # PyTorch dataset & data loaders with augmentation
-    ├── evaluation/            # Evaluation metrics, latency benchmarks & tables
-    ├── models/                # PCLayer, LinearBaseline, PaperMLP, ImprovedResMLP
-    ├── preprocessing/         # Pose quaternion conversion, PCA fitting & splitting
-    ├── training/              # Training loop, early stopping, and checkpointing
-    └── visualization/         # 3D mesh rendering and heatmap generation
-```
-
----
-
-## 6. Running the Pipeline
+##  Running the Pipeline
 
 ### Step 1: Preprocessing & Dimensionality Reduction
 Preprocesses poses to unit quaternions, splits data into 70 train / 20 val / 20 test, and computes PCA on train offsets:
@@ -136,14 +82,14 @@ Preprocesses poses to unit quaternions, splits data into 70 train / 20 val / 20 
 python src/preprocessing/extract_data.py --k-pca 32 --seed 42
 ```
 
-### Step 2: Full End-to-End Pipeline
+###  Full End-to-End Pipeline
 Trains all 4 models (Linear Baseline, Paper MLP, Improved ResMLP, Improved ResMLP + Aug), benchmarks inference latency, evaluates error metrics, and outputs all plots:
 
 ```bash
 python scripts/run_pipeline.py --epochs 800 --k-pca 32
 ```
 
-### Step 3: Live Inference & 3D Garment Demo
+### Live Inference & 3D Garment Demo
 Runs interactive inference on any test sample, measures latency in milliseconds, exports deformed 3D garment meshes to `.obj` format, and renders a 3D comparison plot:
 
 ```bash
@@ -157,20 +103,8 @@ Generated 3D assets:
 
 These `.obj` files can be opened in Blender, MeshLab, or any standard 3D viewer.
 
-### Step 4: Compiling Deliverables
-Generate the two-page write-up and presentation slide deck PDFs:
 
-```bash
-# Two-page project report PDF
-python report/generate_pdf.py
-
-# Landscape presentation slide deck PDF
-python presentation/generate_slides_pdf.py
-```
-
----
-
-## 7. Experimental Results & Benchmarks
+##  Experimental Results & Benchmarks
 
 All models were evaluated on the held-out test split of 20 unseen poses:
 
@@ -186,17 +120,6 @@ All models were evaluated on the held-out test split of 20 unseen poses:
 2. **Physical Error Heatmap:** Errors are concentrated along the lower hem of the shirt (up to 69 mm) where fabric hangs and folds freely under gravity, whereas shoulders and collar have minimal error (< 4 mm) due to tight coupling with skeletal joints. This replicates the exact physical phenomenon reported by Xue & Wu on loose coattails.
 3. **Real-Time Speed:** Inference latency across all models is **< 0.3 ms** (> 3,300 FPS), delivering a **~600,000× speedup** over procedural simulation.
 
----
-
-## 8. Deliverables Summary
-
-- **Code:** Hosted in this repository with clean, modular architecture.
-- **Write-Up:** [report/report.pdf](report/report.pdf) (concise 2-page academic report) and [report/report.md](report/report.md).
-- **Presentation:** [presentation/presentation.pdf](presentation/presentation.pdf) (10-slide landscape presentation) and [presentation/slides.md](presentation/slides.md).
-- **Checkpoints:** Stored in `checkpoints/`.
-- **Figures:** Stored in `figures/`.
-
----
 
 ## 9. Limitations & Future Work
 
