@@ -147,7 +147,7 @@ class Trainer:
                     f"Time: {epoch_time:.3f}s"
                 )
 
-            if epochs_without_improvement >= patience and epoch >= 300:
+            if epochs_without_improvement >= patience and epoch >= min(50, patience):
                 print(f"[{self.model_name}] Early stopping triggered at epoch {epoch} (patience={patience})")
                 break
 
@@ -185,6 +185,7 @@ class Trainer:
                 "model_state_dict": self.model.state_dict(),
                 "best_val_loss": self.best_val_loss,
                 "history": self.history,
+                "k_pca": getattr(self.model, "k_pca", None),
             },
             path,
         )

@@ -2,34 +2,58 @@
 TailorNet Data Preprocessing & Feature Extraction.
 
 Extracts SMPL pose parameters and unposed cloth vertex offsets from the TailorNet dataset,
+loads all available motion sequences (up to 2,122 frames across 18 sequences),
 converts joint rotations to unit quaternions, fits PCA for output dimensionality reduction,
 and creates reproducible train/val/test splits.
 """
 
 import os
+import glob
 import argparse
 import pickle
+from typing import Tuple, Optional
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 from sklearn.decomposition import PCA
 
 
-def load_tailornet_raw(extracted_dir: str):
+def load_tailornet_raw(extracted_dir: str = "data/extracted") -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
-    Loads raw TailorNet files from extracted directory.
+    Loads raw TailorNet files from extracted directory across all available sequences.
+    Concatenates motion sequences into a unified dataset.
     """
-    pose_npz_path = os.path.join(extracted_dir, "t-shirt_female", "pose", "000_023", "poses_000.npz")
-    unposed_path = os.path.join(extracted_dir, "t-shirt_female", "pose", "000_023", "unposed_000.npy")
+    pose_dir = os.path.join(extracted_dir, "t-shirt_female", "pose", "000_023")
     style_path = os.path.join(extracted_dir, "t-shirt_female", "style_model.npz")
     gamma_path = os.path.join(extracted_dir, "t-shirt_female", "style", "gamma_023.npy")
     info_path = os.path.join(extracted_dir, "garment_class_info.pkl")
 
-    if not os.path.exists(pose_npz_path) or not os.path.exists(unposed_path):
-        raise FileNotFoundError(f"Missing required dataset files in {extracted_dir}")
+    if not os.path.exists(pose_dir):
+        raise FileNotFoundError(f"Missing sequence directory: {pose_dir}")
 
-    pose_data = np.load(pose_npz_path)
-    thetas = pose_data["thetas"]  # shape (N, 72)
-    unposed_offsets = np.load(unposed_path)  # shape (N, 7702, 3)
+    # Discover all matching pairs of poses and unposed files
+    pose_files = sorted(glob.glob(os.path.join(pose_dir, "poses_*.npz")))
+    unposed_files = sorted(glob.glob(os.path.join(pose_dir, "unposed_*.npy")))
+
+    if not pose_files or not unposed_files:
+        raise FileNotFoundError(f"No pose or unposed files found in {pose_dir}")
+
+    thetas_list = []
+    unposed_list = []
+    loaded_seqs = 0
+
+    for pf in pose_files:
+        seq_id = os.path.basename(pf).replace("poses_", "").replace(".npz", "")
+        uf = os.path.join(pose_dir, f"unposed_{seq_id}.npy")
+        if os.path.exists(uf):
+            p_data = np.load(pf)
+            u_data = np.load(uf)
+            thetas_list.append(p_data["thetas"])
+            unposed_list.append(u_data)
+            loaded_seqs += 1
+
+    thetas = np.concatenate(thetas_list, axis=0)  # (N, 72)
+    unposed_offsets = np.concatenate(unposed_list, axis=0)  # (N, 7702, 3)
+    print(f"Loaded {loaded_seqs} motion sequences ({len(thetas):,} frames total).")
 
     # Garment mesh topology
     with open(info_path, "rb") as f:
@@ -56,7 +80,6 @@ def axis_angle_to_quaternions(thetas: np.ndarray) -> np.ndarray:
     n_samples = thetas.shape[0]
     thetas_joints = thetas.reshape(-1, 3)
     rotations = R.from_rotvec(thetas_joints)
-    # Scipy returns (x, y, z, w); reorder to (w, x, y, z) to match paper convention
     quats_xyzw = rotations.as_quat().reshape(n_samples, 24, 4)
     quats_wxyz = np.concatenate([quats_xyzw[:, :, 3:4], quats_xyzw[:, :, 0:3]], axis=-1)
     return quats_wxyz.reshape(n_samples, -1)
@@ -67,19 +90,27 @@ def preprocess_and_split(
     unposed_offsets: np.ndarray,
     canonical_v: np.ndarray,
     faces: np.ndarray,
-    n_train: int = 70,
-    n_val: int = 20,
-    n_test: int = 20,
-    k_pca: int = 32,
+    n_train: Optional[int] = None,
+    n_val: Optional[int] = None,
+    n_test: Optional[int] = None,
+    split_ratios: Tuple[float, float, float] = (0.8, 0.1, 0.1),
+    k_pca: int = 128,
     seed: int = 42,
     output_dir: str = "data/processed",
 ):
     """
     Processes pose to quaternions, splits data reproducibly, computes PCA basis on train split,
-    and saves processed artifacts.
+    and saves processed dataset cache.
     """
     os.makedirs(output_dir, exist_ok=True)
     n_samples = len(thetas)
+
+    if n_train is None or n_val is None or n_test is None:
+        r_tr, r_va, r_te = split_ratios
+        n_train = int(n_samples * r_tr)
+        n_val = int(n_samples * r_va)
+        n_test = n_samples - n_train - n_val
+
     assert n_train + n_val + n_test <= n_samples, f"Total split ({n_train}+{n_val}+{n_test}) > total ({n_samples})"
 
     # Convert pose to quaternions
@@ -98,6 +129,7 @@ def preprocess_and_split(
     x_test, y_test = quats[test_idx], offsets_flat[test_idx]
 
     # Fit PCA ONLY on training split to avoid data leakage
+    print(f"Fitting PCA with k={k_pca} components on {len(y_train)} training frames...")
     pca = PCA(n_components=k_pca)
     pca.fit(y_train)
 
@@ -153,10 +185,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Preprocess TailorNet dataset")
     parser.add_argument("--extracted-dir", type=str, default="data/extracted")
     parser.add_argument("--output-dir", type=str, default="data/processed")
-    parser.add_argument("--n-train", type=int, default=70)
-    parser.add_argument("--n-val", type=int, default=20)
-    parser.add_argument("--n-test", type=int, default=20)
-    parser.add_argument("--k-pca", type=int, default=32)
+    parser.add_argument("--n-train", type=int, default=None)
+    parser.add_argument("--n-val", type=int, default=None)
+    parser.add_argument("--n-test", type=int, default=None)
+    parser.add_argument("--k-pca", type=int, default=128)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 

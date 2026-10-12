@@ -1,8 +1,8 @@
-# Model Evaluation Benchmarks
+# Model Evaluation Benchmarks (k = 128)
 
 | Model | Trainable Params | Test MSE Loss | Mean Vertex Err (mm) | Max Vertex Err (mm) | Latency (ms) |
 |---|---:|---:|---:|---:|---:|
-| Linear Baseline | 3,104 | 1.517141e-04 | 17.47 mm | 71.79 mm | 0.052 ms |
-| Paper MLP | 53,664 | 1.265825e-04 | 16.25 mm | 77.19 mm | 0.067 ms |
-| Improved ResMLP | 299,296 | 8.224905e-05 | 12.14 mm | 76.04 mm | 0.163 ms |
-| Improved ResMLP + Aug | 299,296 | 7.634860e-05 | 11.50 mm | 66.78 mm | 0.162 ms |
+| Linear Baseline | 12,416 | 1.188448e-04 | 15.81 mm | 101.13 mm | 0.261 ms |
+| Paper MLP | 78,336 | 7.822229e-05 | 13.02 mm | 98.55 mm | 0.339 ms |
+| Improved ResMLP | 323,968 | 4.499596e-05 | 9.66 mm | 81.05 mm | 0.482 ms |
+| Improved ResMLP + Aug | 323,968 | 4.542750e-05 | 9.83 mm | 75.43 mm | 0.549 ms |

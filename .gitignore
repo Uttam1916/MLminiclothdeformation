@@ -10,15 +10,24 @@ __pycache__/
 *.so
 .ipynb_checkpoints/
 
-# Raw dataset downloads (can be re-downloaded via scripts)
-data/raw/*.zip
-data/extracted/
+# Model checkpoints and weights
+checkpoints/
+*.pt
+*.pth
 
-# Temporary / scratch files
+# All data (raw, extracted, processed caches)
+data/
+*.npz
+*.pkl
+
+# Temporary text dumps and scratch files
+*_text.txt
+paper_text.txt
+report_text.txt
 scratch/
 paper_extracted/
 *.log
 
-# OS files
+# OS generated files
 .DS_Store
 Thumbs.db

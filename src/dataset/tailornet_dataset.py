@@ -2,6 +2,7 @@
 PyTorch Dataset and DataLoader for TailorNet Pose-to-Deformation Prediction.
 """
 
+from typing import Optional
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -59,28 +60,38 @@ def get_dataloaders(
     batch_size: int = 32,
     augment_train: bool = False,
     noise_std: float = 0.01,
+    k_pca: Optional[int] = None,
 ):
     """
     Creates train, val, test PyTorch DataLoaders from cached dataset file.
+    Optionally slices PCA coefficients to the first k_pca components.
     """
     data = np.load(cache_path)
+    k_max = data["pca_components"].shape[0]
+    k = k_pca if k_pca is not None else k_max
+
+    train_pca = data["train_pca_coeffs"][:, :k]
+    val_pca = data["val_pca_coeffs"][:, :k]
+    test_pca = data["test_pca_coeffs"][:, :k]
+    components = data["pca_components"][:k, :]
+
     train_dataset = TailorNetDataset(
         data["x_train"],
         data["y_train"],
-        data["train_pca_coeffs"],
+        train_pca,
         augment=augment_train,
         noise_std=noise_std,
     )
     val_dataset = TailorNetDataset(
         data["x_val"],
         data["y_val"],
-        data["val_pca_coeffs"],
+        val_pca,
         augment=False,
     )
     test_dataset = TailorNetDataset(
         data["x_test"],
         data["y_test"],
-        data["test_pca_coeffs"],
+        test_pca,
         augment=False,
     )
 
@@ -89,13 +100,13 @@ def get_dataloaders(
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     metadata = {
-        "pca_components": torch.tensor(data["pca_components"], dtype=torch.float32),
+        "pca_components": torch.tensor(components, dtype=torch.float32),
         "pca_mean": torch.tensor(data["pca_mean"], dtype=torch.float32),
         "canonical_vertices": data["canonical_vertices"],
         "faces": data["faces"],
         "input_dim": data["x_train"].shape[1],
         "output_dim": data["y_train"].shape[1],
-        "k_pca": data["pca_components"].shape[0],
+        "k_pca": k,
     }
 
     return train_loader, val_loader, test_loader, metadata

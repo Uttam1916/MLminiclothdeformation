@@ -46,20 +46,31 @@ def run_demo(
     device = get_device()
     print(f"Device: {device}")
 
-    # Initialize model
-    pc_layer = PCLayer(pca_comp, pca_mean)
+    ckpt = None
+    if os.path.exists(checkpoint_path):
+        ckpt = torch.load(checkpoint_path, map_location=device)
+        if "k_pca" in ckpt:
+            k_pca = ckpt["k_pca"]
+        elif "model_state_dict" in ckpt:
+            for k_name in ["pc_layer.components", "out_head.1.weight", "net.4.weight", "fc.weight"]:
+                if k_name in ckpt["model_state_dict"]:
+                    k_pca = ckpt["model_state_dict"][k_name].shape[0]
+                    break
+    else:
+        k_pca = pca_comp.shape[0]
+
+    # Initialize model with matching k_pca
+    pc_layer = PCLayer(pca_comp[:k_pca], pca_mean)
     input_dim = x_test.shape[1]
-    k_pca = pca_comp.shape[0]
 
     if "paper" in model_type:
         model = PaperMLP(input_dim, k_pca, pc_layer)
     else:
         model = ImprovedResMLP(input_dim, k_pca, pc_layer, hidden_dim=256, num_blocks=2, dropout_p=0.1)
 
-    if os.path.exists(checkpoint_path):
-        ckpt = torch.load(checkpoint_path, map_location=device)
+    if ckpt is not None:
         model.load_state_dict(ckpt["model_state_dict"])
-        print(f"Loaded checkpoint from {checkpoint_path}")
+        print(f"Loaded checkpoint from {checkpoint_path} (k={k_pca})")
     else:
         print(f"Warning: Checkpoint {checkpoint_path} not found. Running with initialized weights.")
 
