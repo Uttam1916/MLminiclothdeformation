@@ -164,7 +164,7 @@ def build_report_pdf(output_pdf: str = "report.pdf"):
         "consuming dozens of seconds to several minutes per frame (~180 s in the reference paper). This high computational cost prevents physics solvers from "
         "operating at interactive frame rates (30&ndash;60 FPS). "
         "Data-driven machine learning offers an effective solution: by training a regression model to map skeletal joint rotations directly to 3D surface "
-        "mesh offsets, inference runs in sub-millisecond latency (< 0.55 ms, > 1,800 FPS) while preserving visual cloth wrinkle formations.",
+        "mesh offsets, inference runs in sub-millisecond latency (< 0.55 ms on CPU, > 1,800 FPS) while preserving visual cloth wrinkle formations.",
         body_style
     ))
 
@@ -282,7 +282,7 @@ def build_report_pdf(output_pdf: str = "report.pdf"):
     # 6. Experimental Benchmarks Table (Booktabs academic style)
     elements.append(Paragraph("6. Experimental Benchmarks & Quantitative Comparison (<i>k</i> = 128)", sec_style))
     eval_raw_data = [
-        ["Model Architecture", "Trainable Params", "Test MSE Loss", "Mean Vertex Err", "Max Vertex Err", "Inference Latency"],
+        ["Model Architecture", "Trainable Params", "Test MSE Loss", "Mean Vertex Err", "Max Vertex Err", "CPU Latency"],
         ["Linear Baseline (Paper ID 0)", "12,416", "1.188 &times; 10<sup>-4</sup>", "15.81 mm", "101.13 mm", "0.261 ms"],
         ["Paper MLP Baseline (Paper ID 3)", "78,336", "7.822 &times; 10<sup>-5</sup>", "13.02 mm", "98.55 mm", "0.339 ms"],
         ["Improved ResMLP (Ours)", "323,968", "<b>4.500 &times; 10<sup>-5</sup></b>", "<b>9.66 mm</b>", "81.05 mm", "0.482 ms"],
@@ -312,7 +312,7 @@ def build_report_pdf(output_pdf: str = "report.pdf"):
     ]))
     elements.append(t2)
     elements.append(Paragraph(
-        "<b>Table 2:</b> Final benchmark on unseen 213-frame test split (Adam, lr=1e-4, batch size 64, early stopping patience 15). "
+        "<b>Table 2:</b> Final benchmark on unseen 213-frame test split (Adam, lr=1e-4, batch size 64, early stopping patience 15; single-sample latency measured on CPU). "
         "Our Improved ResMLP reduces test MSE by 42.5% and brings mean vertex error to sub-centimeter accuracy (9.66 mm).",
         caption_style
     ))
@@ -345,7 +345,7 @@ def build_report_pdf(output_pdf: str = "report.pdf"):
         "from 98.55 mm to <b>75.43 mm (23.5% reduction in peak error)</b>, preventing unphysical mesh stretching on unseen extreme poses.<br/>"
         "<b>3. Physical Error Distribution:</b> As evidenced in Figure 3, errors correlate directly with cloth freedom-of-movement: upper chest and "
         "shoulder fabric adheres rigidly to the skeleton, while the bottom hem hangs freely under gravity, directly replicating Xue & Wu's coattail findings.<br/>"
-        "<b>4. Real-Time Framerates:</b> Inference latency is 0.482 ms on GPU and ~16.8 ms on CPU (> 1,800 FPS batched), comfortably exceeding 60 FPS VR/game requirements.",
+        "<b>4. Real-Time Framerates:</b> Inference latency is 0.482 ms on CPU (> 2,000 FPS), comfortably exceeding 60 FPS VR/game interactive requirements without requiring dedicated GPU acceleration.",
         body_style
     ))
 

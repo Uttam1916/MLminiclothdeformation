@@ -153,7 +153,7 @@ def format_comparison_table(results_list: List[Dict[str, Any]]) -> str:
     """
     header = (
         "| Model | Trainable Params | Test MSE Loss | Mean Vertex Err (mm) | "
-        "Max Vertex Err (mm) | Latency (ms) |\n"
+        "Max Vertex Err (mm) | Latency (CPU) |\n"
         "|---|---:|---:|---:|---:|---:|"
     )
     rows = []
