@@ -75,13 +75,6 @@ Outputs generated in `outputs/`:
 - `demo_sample_0_gt.obj`: Ground-truth simulated garment mesh.
 - `demo_sample_0_render.png`: 3-panel comparison render.
 
-### Step 4: Generate the 2-Page Report PDF
-Compiles the clean, academic black-and-white 2-page report:
-```bash
-python scripts/generate_report_pdf.py
-```
-Output: `report.pdf`.
-
 ---
 
 ## 5. Experimental Results
